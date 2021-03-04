@@ -1,3 +1,5 @@
+import { ITableCache } from './tableCache'
+
 export type FieldSpecValue = string | number | null
 export type FnConvert = (rowData: string[]) => FieldSpecValue
 
@@ -11,7 +13,7 @@ interface FieldSpecComponents {
 function fastFieldComponents (fieldSpec: string): FieldSpecComponents {
   let state = 0
   const matched = ['', '', '', '']
-  for (let i = 1; i < fieldSpec.length; i++) {
+  for (let i = 0; i < fieldSpec.length; i++) {
     const c = fieldSpec[i]
     switch (c) {
       case '{': state = 1; continue
@@ -84,30 +86,28 @@ function typeFunc (type: string | undefined): FnType {
       fn = (v: string) => v.trim()
       break
     case 'skipdecimal':
-      fn = (v: string) => v.replace(/\./, '')
+      fn = (v: string) => v.replace(/\./g, '')
       break
     default:
-      console.error(`Undefined fieldSpecifier type modifier: ${type}`)
+      console.error(`ERROR: Undefined fieldSpecifier type modifier: ${type}`)
       fn = (v: string) => v
       break
   }
-  return (v: string | null): string | number | null => v && fn(v)
+  return (v: string | null): FieldSpecValue => v && fn(v)
 }
 
-function lookupFunc (table: string | undefined): FnLookup {
+function lookupFunc (table: string | undefined, tableCache: ITableCache): FnLookup {
   if (typeof table === 'undefined') {
-    return (v: string | number | null) => v
+    return (v: FieldSpecValue) => v
   }
-  console.error('WARNING: Table lookups not yet implemented')
-  let lookupFn = (v: string) => v
-  return (v: string | number | null) => v && lookupFn(v.toString())
+  return (v: FieldSpecValue) => v && tableCache.lookup(table, v.toString())
 }
 
-export function fieldValueFunction (fieldSpec: string, headers: string[]): FnConvert {
+export function fieldValueFunction (fieldSpec: string, headers: string[], tableCache: ITableCache ): FnConvert {
   const components = fastFieldComponents(fieldSpec)
 
   return (rowData: string[]) =>
-    lookupFunc(components.lookup)(
+    lookupFunc(components.lookup, tableCache)(
       typeFunc(components.type)(
         lengthFunc(components.length)(
           fieldFunc(components.field, headers)(rowData)

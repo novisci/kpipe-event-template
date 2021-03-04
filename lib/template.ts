@@ -1,53 +1,65 @@
-import { KpEvent } from './kpevent'
 import { fieldValueFunction, FieldSpecValue } from './fieldSpec'
+import { ITableCache } from './tableCache'
 
-// Valid types for an event template
-namespace Template {
-  export type Value = KpEvent.Value
-}
-
-interface IToken {
+// Row data observeable
+interface IRowData {
   setRowData (rowData: string[]): void
-  toJSON (): string
+  getRowData (): string[]
 }
 
-class ValueToken implements IToken {
-  private _val: string
-  constructor (val: Template.Value) {
-    this._val = JSON.stringify(val)
+// The rowData class is observed by all the FieldSpecTokens to determine
+//  the current field values for a row of data
+export class RowData implements IRowData {
+  private _rowData?: string[]
+  constructor () {
+
   }
-  setRowData () {}
-  toJSON () {
-    return this._val
+  setRowData (rowData: string[]): void {
+    this._rowData = rowData
+  }
+  getRowData (): string[] {
+    if (typeof this._rowData === 'undefined') {
+      throw Error(`ERROR: setRowData() must be called before getRowData()`)
+    }
+    return this._rowData
   }
 }
 
+// Template value tokens
+interface IToken {
+  toJSON (): any
+}
+
+// The FieldSpec token holds a function which returns a fieldSpec's 
+//  value given a set of row data. The function is generated during
+//  initialization based on the parsed result of the fieldSpec.
+//  
 class FieldSpecToken implements IToken {
   private _fieldSpec: string
   private _fnFieldValue: (rowData: string[]) => FieldSpecValue
-  private _rowData?: string[]
+  private _rowData: IRowData
 
-  constructor (fieldSpec: string, headers: string[]) {
+  constructor (fieldSpec: string, headers: string[], tableCache: ITableCache, rowData: IRowData) {
     this._fieldSpec = fieldSpec
-    this._fnFieldValue = fieldValueFunction(fieldSpec, headers)
-  }
-
-  setRowData (rowData: string[]) {
+    this._fnFieldValue = fieldValueFunction(fieldSpec, headers, tableCache)
     this._rowData = rowData
   }
 
   toJSON () {
-    if (!this._rowData) {
-      throw Error(`setRowData() must be called before token conversion`)
-    }
-    return JSON.stringify(this._fnFieldValue(this._rowData))
+    return this._fnFieldValue(this._rowData.getRowData())
   }
 }
 
+// Compile an incoming event template (with embedded field specifiers) and transform the
+//  discovered fieldSpecs into a FieldSpecToken whose generated function will retrieve
+//  its value from the supplied row data when the object is stringified as JSON
 type TemplateElement = IToken | string | number | null | TemplateElement[] | { [key: string]: TemplateElement }
 
-export function compileTemplate (template: any, headers: string[]): TemplateElement {
+export function compileTemplate (template: any, headers: string[], tableCache: ITableCache, rowData: IRowData): TemplateElement {
   function compileValue (template: any): TemplateElement {
+    if (template === null) {
+      return null
+    }
     if (Array.isArray(template)) {
       return template.map((t) => compileValue(t))
     }
@@ -59,10 +71,10 @@ export function compileTemplate (template: any, headers: string[]): TemplateElem
       )
     }
     if (typeof template !== 'string' || template[0] !== '$') {
-      return new ValueToken(template)
+      return template // Numbers and non-fieldspec strings are transferred as-is
     }
     const fieldSpec = template.slice(1)
-    return new FieldSpecToken(fieldSpec, headers)
+    return new FieldSpecToken(fieldSpec, headers, tableCache, rowData)
   }
 
   return compileValue(template)

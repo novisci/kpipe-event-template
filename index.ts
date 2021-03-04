@@ -1,2 +1,2 @@
-export * from './lib/kpevent'
-export * from './lib/template'
+export { compileTemplate, RowData } from './lib/template'
+export { TableCache } from './lib/tableCache'
