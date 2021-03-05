@@ -54,45 +54,32 @@ function lengthFunc (length: string | undefined): FnLength {
   return (v: string | null) => v && v.substring(0, len)
 }
 
+export type Modifiers = { [key: string]: (v: string) => FieldSpecValue}
+const fieldModifiers: Modifiers = {
+  integer: (v: string) => parseInt(v, 10),
+  number: (v: string) => parseFloat(v),
+  ymdate: (v: string) => `${v.substring(0, 4)}-${v.substring(4)}-15`,
+  nodecimal: (v: string) => v.replace(/\..*$/, ''), // Deprecated
+  trimdecimal: (v: string) => v.replace(/\..*$/, ''),
+  npi: (v: string) => v.length > 5 ? v : null, // Only pass valid NPIs, otherwise null
+  fromDateString: (v: string) => (new Date(v)).toISOString().substring(0, 10),
+  trim: (v: string) => v.trim(),
+  skipdecimal: (v: string) => v.replace(/\./g, '')
+}
+
 function typeFunc (type: string | undefined): FnType {
   if (typeof type === 'undefined') {
     return (v: string | null) => v
   }
   let fn: (v: string) => string | number | null
 
-  switch (type) {
-    case 'integer': 
-      fn = (v: string) => parseInt(v, 10)
-      break
-    case 'number':
-      fn = (v: string) => parseFloat(v)
-      break
-    case 'ymdate':
-      fn = (v: string) => `${v.substring(0, 4)}-${v.substring(4)}-15`
-      break
-    case 'nodecimal':
-      console.error('WARNING: (nodecimal) is deprecated, use (trimdecimal) instead')
-      break
-    case 'trimdecimal':
-      fn = (v: string) => v.replace(/\..*$/, '')
-      break
-    case 'npi':
-      fn = (v: string) => v.length > 5 ? v : null // Only pass valid NPIs, otherwise null
-      break
-    case 'fromDateString':
-      fn = (v: string) => (new Date(v)).toISOString().substring(0, 10)
-      break
-    case 'trim':
-      fn = (v: string) => v.trim()
-      break
-    case 'skipdecimal':
-      fn = (v: string) => v.replace(/\./g, '')
-      break
-    default:
-      console.error(`ERROR: Undefined fieldSpecifier type modifier: ${type}`)
-      fn = (v: string) => v
-      break
+  if (fieldModifiers[type]) {
+    fn = fieldModifiers[type]
+  } else {
+    console.error(`ERROR: Undefined fieldSpecifier type modifier: ${type}`)
+    fn = (v: string) => v
   }
+
   return (v: string | null): FieldSpecValue => v && fn(v)
 }
 
@@ -101,6 +88,12 @@ function lookupFunc (table: string | undefined, tableCache: ITableCache): FnLook
     return (v: FieldSpecValue) => v
   }
   return (v: FieldSpecValue) => v && tableCache.lookup(table, v.toString())
+}
+
+export function addModifiers (modifiers: Modifiers): void {
+  Object.entries(modifiers).forEach((e) => {
+    fieldModifiers[e[0]] = e[1]
+  })
 }
 
 export function fieldValueFunction (fieldSpec: string, headers: string[], tableCache: ITableCache ): FnConvert {

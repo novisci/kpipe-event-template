@@ -1,7 +1,7 @@
 {
-  "name": "kpipe-events",
-  "version": "1.0.0",
-  "description": "",
+  "name": "kpipe-event-template",
+  "version": "0.9.0",
+  "description": "Efficient mapping of arrays of data into JSON objects using template objects",
   "main": "index.js",
   "scripts": {
     "jest": "./node_modules/.bin/jest",
@@ -10,8 +10,8 @@
     "build-ts": "npm run tsc --"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Paul Rowan <prowan@novisci.com>",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^26.0.20",
     "jest": "^26.6.3",
