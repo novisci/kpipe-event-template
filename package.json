@@ -3,6 +3,7 @@
   "version": "0.9.0",
   "description": "Efficient mapping of arrays of data into JSON objects using template objects",
   "main": "index.js",
+  "repository": "github:novisci/kpipe-event-template",
   "scripts": {
     "jest": "./node_modules/.bin/jest",
     "tsc": "./node_modules/.bin/tsc",
