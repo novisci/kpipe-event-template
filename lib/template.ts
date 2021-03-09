@@ -1,4 +1,5 @@
 import { fieldValueFunction, FieldSpecValue } from './fieldSpec'
+import { expressionValueFunction, StaticVars } from './fieldExpression'
 import { ITableCache } from './tableCache'
 
 // Row data observeable
@@ -47,6 +48,22 @@ class FieldSpecToken implements IToken {
 
   toJSON () {
     return this._fnFieldValue(this._rowData.getRowData())
+  }
+}
+
+
+class ExpressionToken {
+  private _expression: string
+  private _fnExpressionValue: (rowData: string[]) => FieldSpecValue
+  private _rowData: IRowData
+
+  constructor(expression: string, headers: string[], tableCache: ITableCache, rowData: IRowData, staticVars: StaticVars = {}) {
+    this._expression = expression
+    this._fnExpressionValue = expressionValueFunction(expression, headers, tableCache, staticVars)
+    this._rowData = rowData
+  }
+  toJSON() {
+    return this._fnExpressionValue(this._rowData.getRowData())
   }
 }
 

@@ -1,4 +1,5 @@
 import { ITableCache } from './tableCache'
+import { fieldModifiers, Modifiers } from './modifiers'
 
 export type FieldSpecValue = string | number | null
 export type FnConvert = (rowData: string[]) => FieldSpecValue
@@ -54,19 +55,6 @@ function lengthFunc (length: string | undefined): FnLength {
   return (v: string | null) => v && v.substring(0, len)
 }
 
-export type Modifiers = { [key: string]: (v: string) => FieldSpecValue}
-const fieldModifiers: Modifiers = {
-  integer: (v: string) => parseInt(v, 10),
-  number: (v: string) => parseFloat(v),
-  ymdate: (v: string) => `${v.substring(0, 4)}-${v.substring(4)}-15`,
-  nodecimal: (v: string) => v.replace(/\..*$/, ''), // Deprecated
-  trimdecimal: (v: string) => v.replace(/\..*$/, ''),
-  npi: (v: string) => v.length > 5 ? v : null, // Only pass valid NPIs, otherwise null
-  fromDateString: (v: string) => (new Date(v)).toISOString().substring(0, 10),
-  trim: (v: string) => v.trim(),
-  skipdecimal: (v: string) => v.replace(/\./g, '')
-}
-
 function typeFunc (type: string | undefined): FnType {
   if (typeof type === 'undefined') {
     return (v: string | null) => v
@@ -88,12 +76,6 @@ function lookupFunc (table: string | undefined, tableCache: ITableCache): FnLook
     return (v: FieldSpecValue) => v
   }
   return (v: FieldSpecValue) => v && tableCache.lookup(table, v.toString())
-}
-
-export function addModifiers (modifiers: Modifiers): void {
-  Object.entries(modifiers).forEach((e) => {
-    fieldModifiers[e[0]] = e[1]
-  })
 }
 
 export function fieldValueFunction (fieldSpec: string, headers: string[], tableCache: ITableCache ): FnConvert {
