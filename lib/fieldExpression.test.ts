@@ -77,6 +77,22 @@ test('Test function trimdecimal()', () => {
 })
 
 test('Test compound expression with field specifier', () => {
-  const staticVars = { 'VAR': 'C' }
-  expect(testExpression('$${VAR}(integer)/test-lookup', ['11111', '2', '3', '4'], staticVars)).toBe('Three')
+  const staticVars = { 'VAR': 'A' }
+  expect(testExpression('$${VAR}{1}/test-lookup', ['11111', '2', '3', '4'], staticVars)).toBe('One')
+})
+
+test('Test dynamic field specifier from expression', () => {
+  expect(testExpression('$${A}', ['B', '1', '2', '3'])).toBe('1')
+})
+
+test('Test dynamic modifier from expression throws error', () => {
+  expect(() => testExpression('$A(${B})', ['1', 'integer', '2', '3'])).toThrow(Error)
+})
+
+test('Test dynamic truncation from expression throws error', () => {
+  expect(() => testExpression('$A{${B}}', ['1111', '1', '2', '3'])).toThrow(Error)
+})
+
+test('Test dynamic lookup from expression throws error', () => {
+  expect(() => testExpression('$A/${B}', ['1111', 'test-lookup', '2', '3'])).toThrow(Error)
 })

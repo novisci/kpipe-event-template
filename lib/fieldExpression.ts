@@ -87,7 +87,7 @@ function splitExpression (expr: string, headers: string[], staticVars: StaticVar
     splitExpression(expr.slice(m.index + m[0].length), headers, staticVars)
   ]
 
-  return exprs.flat()
+  return exprs.flat().filter((e) => e !== '')
 }
 
 /***
@@ -109,9 +109,16 @@ export function expressionValueFunction (expression: string, headers: string[], 
     return value
   }
 
-  if (exprs[0] === '$') {
+  // Check for expression resulting in a field specifier
+  if (typeof exprs[0] === 'string' && exprs[0][0] === '$') {
+    // console.info(exprs)
+    // Only the field name itself may come from the expression, not modifiers, truncation, or lookup
+    if (exprs[0] !== '$' || typeof exprs[1] !== 'function' || exprs.slice(2).reduce((a: boolean, c) => (a || typeof c === 'function'), false)) {
+      throw Error(`Field expression may only modify a field specifier's field component`)
+    }
     // Expression evaluates to a field specifier, compute its function and compose
     return (rowData: string[]) => {
+      // console.info(exprFn(rowData))
       return fieldValueFunction(exprFn(rowData).slice(1), headers, tableCache)(rowData)
     }
   } else {
