@@ -72,10 +72,21 @@ class ExpressionToken {
 //  its value from the supplied row data when the object is stringified as JSON
 type TemplateElement = IToken | string | number | null | TemplateElement[] | { [key: string]: TemplateElement }
 
-export function compileTemplate (template: any, headers: string[], tableCache: ITableCache, rowData: IRowData): TemplateElement {
+export function compileTemplate (
+  template: any,
+  headers: string[],
+  tableCache: ITableCache,
+  rowData: IRowData,
+  staticVars: StaticVars = {}
+): TemplateElement {
+  // Define a recursive compile function for the template context
   function compileValue (template: any): TemplateElement {
-    if (template === null) {
-      return null
+    if (typeof template === 'function') {
+      throw Error(`Template element cannot be a function`)
+    }
+    if (template === null || typeof template === 'number') {
+      // Numbers and null are passed through
+      return template
     }
     if (Array.isArray(template)) {
       return template.map((t) => compileValue(t))
@@ -87,11 +98,17 @@ export function compileTemplate (template: any, headers: string[], tableCache: I
         )
       )
     }
-    if (typeof template !== 'string' || template[0] !== '$') {
-      return template // Numbers and non-fieldspec strings are transferred as-is
+    if (template.indexOf('${') !== -1) {
+      // Template string contains a field expression, create an expression token
+      return new ExpressionToken(template, headers, tableCache, rowData, staticVars)
     }
-    const fieldSpec = template.slice(1)
-    return new FieldSpecToken(fieldSpec, headers, tableCache, rowData)
+    if (template[0] === '$') {
+      // A template string starting with $ is a field specifier
+      const fieldSpec = template.slice(1)
+      return new FieldSpecToken(fieldSpec, headers, tableCache, rowData)
+    }
+    // non-fieldspec strings are transferred as-is
+    return template 
   }
 
   return compileValue(template)

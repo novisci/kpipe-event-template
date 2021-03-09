@@ -21,7 +21,7 @@ const parser = new Parser({
     assignment: false,
     logical: true,
     comparison: true
-    // // These default to true, but are included to be explicit
+    // // These default to true, but are included for reference
     // add: true,
     // concatenate: true,
     // conditional: true,
