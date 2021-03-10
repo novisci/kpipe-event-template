@@ -70,7 +70,8 @@ class ExpressionToken {
 // Compile an incoming event template (with embedded field specifiers) and transform the
 //  discovered fieldSpecs into a FieldSpecToken whose generated function will retrieve
 //  its value from the supplied row data when the object is stringified as JSON
-type TemplateElement = IToken | string | number | null | TemplateElement[] | { [key: string]: TemplateElement }
+type TemplateElementObject = { [key: string]: TemplateElement }
+type TemplateElement = IToken | string | number | null | TemplateElement[] | TemplateElementObject
 
 export function compileTemplate (
   template: any,
@@ -113,4 +114,48 @@ export function compileTemplate (
   }
 
   return compileValue(template)
+}
+
+/***
+ * Evaluate a template and return the value as an object (not stringified JSON)
+ */
+type TemplateValueObject = { [key: string]: TemplateValue }
+type TemplateValue = string | number | null | TemplateValue[] | TemplateValueObject
+
+function getObject (template: TemplateElementObject): TemplateValueObject {
+  return Object.fromEntries(
+    Object.entries(template).map(
+      (e) =>[e[0], getValue(e[1])]
+    )
+  )
+}
+
+function getArray (template: TemplateElement[]): TemplateValue[] {
+  const arr = []
+  for(let i = 0; i < template.length; i++) {
+    arr.push(getValue(template[i]))
+  }
+  return arr
+  // return template.map((t) => getValue(t))
+}
+
+function getValue (template: TemplateElement): TemplateValue {
+  if (typeof template === 'string' || template === null || typeof template === 'number') {
+    // Numbers, strings, and null are passed through
+    return template
+  }
+  if (typeof template === 'object') {
+    if (Array.isArray(template)) {
+      return getArray(template)
+    }
+    if (typeof template.toJSON === 'function') {
+      return template.toJSON()
+    }
+    return getObject(template as TemplateElementObject)
+  }
+  throw Error(`Unhandled template element type: ${typeof template}`)
+}
+
+export function getTemplateValue (template: TemplateElement): TemplateValue {
+  return getValue(template)
 }
