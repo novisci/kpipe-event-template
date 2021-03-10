@@ -11,7 +11,7 @@ headers.
 The library converts the template's field references into objects which provide a custom `toJSON()` function
 which directly produces the field reference's value given the current row of data. This ensures that
 the expensive parsing of the field reference syntax is performed once producing a single function returning the
-value of the field reference for a given row of data.
+value of that field reference for a given row of data.
 
 For example:
 
@@ -133,7 +133,7 @@ Examples:
 
 | Expression | Description |
 |---|---|
-|`${FIELD1}`|Retrieve the value of FIELD1 |
+|`${FIELD1}`|Retrieve the value of FIELD1 (synonymous with $FIELD) |
 |`$${IT}`|Retrieve the value of IT which determines the name of the field in the resulting field specifier |
 |`${concat(FIELD1, '-', FIELD2)}`|Returns value of FIELD1 concatenated with a hyphen and the value of FIELD2 |
 |`${ifelse(FIELD1, FIELD2, FIELD3)}`|If FIELD1 evaluates to true, return the value of FIELD2, otherwise return the value of FIELD3|
