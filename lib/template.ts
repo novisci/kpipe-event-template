@@ -98,6 +98,7 @@ export function compileTemplate (
         )
       )
     }
+
     if (template.indexOf('${') !== -1) {
       // Template string contains a field expression, create an expression token
       return new ExpressionToken(template, headers, tableCache, rowData, staticVars)
