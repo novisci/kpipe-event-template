@@ -85,8 +85,8 @@ export function compileTemplate (
     if (typeof template === 'function') {
       throw Error(`Template element cannot be a function`)
     }
-    if (template === null || typeof template === 'number') {
-      // Numbers and null are passed through
+    if (template === null || typeof template === 'number' || typeof template === 'boolean') {
+      // Numbers, booleans, and null are passed through
       return template
     }
     if (Array.isArray(template)) {
@@ -98,6 +98,10 @@ export function compileTemplate (
           (e) =>[e[0], compileValue(e[1])]
         )
       )
+    }
+
+    if (!template.indexOf) {
+      console.error(`Template ${template}`)
     }
 
     if (template.indexOf('${') !== -1) {
@@ -120,7 +124,7 @@ export function compileTemplate (
  * Evaluate a template and return the value as an object (not stringified JSON)
  */
 type TemplateValueObject = { [key: string]: TemplateValue }
-type TemplateValue = string | number | null | TemplateValue[] | TemplateValueObject
+type TemplateValue = string | boolean | number | null | TemplateValue[] | TemplateValueObject
 
 function getObject (template: TemplateElementObject): TemplateValueObject {
   return Object.fromEntries(
@@ -140,8 +144,8 @@ function getArray (template: TemplateElement[]): TemplateValue[] {
 }
 
 function getValue (template: TemplateElement): TemplateValue {
-  if (typeof template === 'string' || template === null || typeof template === 'number') {
-    // Numbers, strings, and null are passed through
+  if (typeof template === 'string' || template === null || typeof template === 'number' || typeof template === 'boolean') {
+    // Numbers, booleans, strings, and null are passed through
     return template
   }
   if (typeof template === 'object') {
