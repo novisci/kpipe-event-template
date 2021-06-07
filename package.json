@@ -1,6 +1,6 @@
 {
   "name": "kpipe-event-template",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "description": "Efficient mapping of arrays of data into JSON objects using template objects",
   "main": "index.js",
   "repository": "github:novisci/kpipe-event-template",

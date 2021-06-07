@@ -106,6 +106,11 @@ Note: \
 
   `$fieldName` -> `{length}` -> `(type)` -> `/lookup`
 
+Value Specification: \
+  Prepending a field specifier with "!" uses the following as a value, not a field name \
+
+  `!somestring{5}(integer)/table2_xref`
+
 Type conversion functions (type):
 
 | Modifier | Description |

@@ -101,3 +101,9 @@ test('Test dynamic truncation from expression throws error', () => {
 test('Test dynamic lookup from expression throws error', () => {
   expect(() => testExpression('$A/${B}', ['1111', 'test-lookup', '2', '3'])).toThrow(Error)
 })
+
+test('Field expression returns value instead of field name', () => {
+  const staticVars = { 'VAL': '11111' }
+  expect(testExpression('!${VAL}{1}/test-lookup', ['11111', '2', '3', '4'], staticVars)).toBe('One')
+  expect(testExpression('!${"3"}{1}/test-lookup', ['11111', '2', '3', '4'], staticVars)).toBe('Three')
+})
