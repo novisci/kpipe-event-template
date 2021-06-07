@@ -64,6 +64,11 @@ test('Test function ifelse()', () => {
   expect(testSimple('${ifelse(false, "barney", A)}')).toBe('fred')
 })
 
+test('Test function length()', () => {
+  expect(testSimple('${length("12345678")}')).toBe("8")
+  expect(testSimple('${ifelse(length("12345678") == 8, "yes", "no")}')).toBe("yes")
+})
+
 test('Test function trim()', () => {
   expect(testSimple('${trim("  fred  ")}')).toBe('fred')
 })

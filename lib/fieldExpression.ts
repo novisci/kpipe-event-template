@@ -45,6 +45,7 @@ const parser = new Parser({
 // Custom parser functions
 parser.functions.concat = (...args: any[]) => args.reduce((a, c) => a + c, '')
 parser.functions.ifelse = (cond: any, yes: any, no: any) => cond ? yes : no
+parser.functions.length = (str: any) => (typeof str === 'string' ? str.length : 0)
 
 Object.entries(fieldModifiers).forEach((e) => {
   if (parser.functions[e[0]]) {
