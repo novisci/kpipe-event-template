@@ -1,8 +1,9 @@
 import * as path from 'path'
 import * as fs from 'fs'
+import { FieldSpecValue } from './fieldSpec'
 
 export interface ITableCache {
-  lookup (table: string, key: string): string | null
+  lookup (table: string, key: FieldSpecValue): FieldSpecValue
 }
 
 type LookupTable = { [key: string]: string | null }
@@ -14,7 +15,7 @@ export class TableCache implements ITableCache {
     this._tablesPath = tablesPath
   }
 
-  lookup (table: string, key: string | null): string | null {
+  lookup (table: string, key: FieldSpecValue): FieldSpecValue {
     if (typeof this._tables[table] === 'undefined') {
       console.info(`Loading table: ${table}`)
       const tablePath = path.join(this._tablesPath, `${table}.json`)
@@ -33,15 +34,15 @@ export class TableCache implements ITableCache {
     } else {
       const tbl = this._tables[table] as LookupTable
       if (key !== null)  {
-        const v = tbl[key]
+        const v = tbl[key.toString()] // Convert a numeric key to a string
         if (typeof v !== undefined) {
           // Table loaded and key exists, return table value
           return v
         }
       }
-      // Return the default table value or null if none defined
+      // Return the default table value or key value if none defined
       const def = tbl['']
-      return typeof def !== 'undefined' ? def : null
+      return typeof def !== 'undefined' ? def : key
     }
   }
 }

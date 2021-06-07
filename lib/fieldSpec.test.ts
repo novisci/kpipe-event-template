@@ -6,7 +6,7 @@ beforeAll(() => {
   tableCache = new TableCache('./test') // Local to project root
 })
 
-function testFieldSpec(fieldSpec: string, rowData: string[]) {
+function testFieldSpec(fieldSpec: string, rowData: (string | null)[]) {
   return fieldValueFunction(fieldSpec, ['A', 'B', 'C', 'D'], tableCache)(rowData)
 }
 
@@ -52,8 +52,22 @@ test('Truncate and convert with field{length}(integer)', () => {
 test('Test lookup with field/table', () => {
   expect(testFieldSpec('B/test-lookup', ['11111', '2', '3', '4'])).toBe('Two')
 })
-test('Test numeric lookup with field(integer)/table', () => {
+
+test('Lookup returns default value with null key', () => {
+  expect(testFieldSpec('B/test-lookup', ['11111', null, '3', '4'])).toBe('None')
+})
+
+test('Lookup returns default value when key is undefined', () => {
+  expect(testFieldSpec('E/test-lookup', ['11111', '2', '3', '4'])).toBe('None')
+})
+
+test('Numeric lookup keys converted to strings in field(integer)/table', () => {
   expect(testFieldSpec('C(integer)/test-lookup', ['11111', '2', '3', '4'])).toBe('Three')
+})
+
+test('Lookup with no default passes through undefined or null key', () => {
+  expect(testFieldSpec('E/test-lookup-no-default', ['11111', '2', '3', '4'])).toBe(null)
+  expect(testFieldSpec('B/test-lookup-no-default', ['11111', null, '3', '4'])).toBe(null)
 })
 
 test('Test all modifiers with field{length}(modifier)/lookup', () => {

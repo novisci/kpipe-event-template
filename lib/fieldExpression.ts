@@ -1,9 +1,9 @@
 import { Parser, Expression, Value } from 'expr-eval'
 import { ITableCache } from './tableCache'
-import { fieldValueFunction, FnConvert, FieldSpecValue } from './fieldSpec'
+import { fieldValueFunction, FnConvert, FieldSpecValue, RowData } from './fieldSpec'
 import { fieldModifiers, Modifiers } from './modifiers'
 
-type FnExpression = (...args: string[]) => string
+type FnExpression = (...args: (string | null)[]) => string
 export type StaticVars = { [key: string]: Value }
 
 declare module "expr-eval" {
@@ -97,7 +97,7 @@ function splitExpression (expr: string, headers: string[], staticVars: StaticVar
 export function expressionValueFunction (expression: string, headers: string[], tableCache: ITableCache, staticVars: StaticVars = {} ): FnConvert {
   const exprs = splitExpression(expression, headers, staticVars)
 
-  const exprFn = (rowData: string[]) => {
+  const exprFn = (rowData: RowData) => {
     let value = exprs.reduce<string>((a, c) => {
       if (typeof c === 'function') {
         return a + c(...rowData)
@@ -118,12 +118,12 @@ export function expressionValueFunction (expression: string, headers: string[], 
       throw Error(`Field expression may only modify a field specifier's field component`)
     }
     // Expression evaluates to a field specifier, compute its function and compose
-    return (rowData: string[]) => {
+    return (rowData: RowData) => {
       // console.info(exprFn(rowData))
       return fieldValueFunction(exprFn(rowData).slice(1), headers, tableCache)(rowData)
     }
   } else {
-    // Not field specifier, just return the expression evalutaion
+    // Not field specifier, just return the expression evaluation
     return exprFn
   }
 }

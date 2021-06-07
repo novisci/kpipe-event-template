@@ -1,8 +1,9 @@
 import { ITableCache } from './tableCache'
 import { fieldModifiers, Modifiers } from './modifiers'
 
+export type RowData = (string | null)[]
 export type FieldSpecValue = string | number | null
-export type FnConvert = (rowData: string[]) => FieldSpecValue
+export type FnConvert = (rowData: RowData) => FieldSpecValue
 
 interface FieldSpecComponents {
   field: string
@@ -34,7 +35,7 @@ function fastFieldComponents (fieldSpec: string): FieldSpecComponents {
   }
 }
 
-type FnField = (rowData: string[]) => string | null
+type FnField = (rowData: RowData) => string | null
 type FnLength = (val: string | null) => string | null
 type FnType = (val: string | null) => FieldSpecValue
 type FnLookup = (val: FieldSpecValue) => FieldSpecValue
@@ -42,17 +43,21 @@ type FnLookup = (val: FieldSpecValue) => FieldSpecValue
 function fieldFunc (field: string, headers: string[]): FnField {
   const idx = headers.indexOf(field)
   if (idx !== -1) {
-    return (rowData: string[]) => rowData[idx] || null
+    return (rowData: RowData) => rowData[idx] || null
   }
   return () => null
 }
 
 function lengthFunc (length: string | undefined): FnLength {
-  let len: number
-  if (typeof length === 'undefined' || isNaN(len = parseInt(length, 10))) {
+  if (typeof length === 'undefined') {
+    return (v: string | null) => v 
+  }
+  const len = parseInt(length, 10)
+  if (isNaN(len)) {
+    console.error(`ERROR: Length modifier is not a number ${length}`)
     return (v: string | null) => v
   }
-  return (v: string | null) => v && v.substring(0, len)
+  return (v: string | null) => typeof v === 'string' ? v.substring(0, len) : null
 }
 
 function typeFunc (type: string | undefined): FnType {
@@ -68,20 +73,20 @@ function typeFunc (type: string | undefined): FnType {
     fn = (v: string) => v
   }
 
-  return (v: string | null): FieldSpecValue => v && fn(v)
+  return (v: string | null): FieldSpecValue => typeof v === 'string' ? fn(v) : null
 }
 
 function lookupFunc (table: string | undefined, tableCache: ITableCache): FnLookup {
   if (typeof table === 'undefined') {
     return (v: FieldSpecValue) => v
   }
-  return (v: FieldSpecValue) => v && tableCache.lookup(table, v.toString())
+  return (v: FieldSpecValue) => tableCache.lookup(table, v)
 }
 
 export function fieldValueFunction (fieldSpec: string, headers: string[], tableCache: ITableCache ): FnConvert {
   const components = fastFieldComponents(fieldSpec)
 
-  return (rowData: string[]) =>
+  return (rowData: (string | null)[]) =>
     lookupFunc(components.lookup, tableCache)(
       typeFunc(components.type)(
         lengthFunc(components.length)(
