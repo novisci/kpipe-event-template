@@ -1,7 +1,13 @@
 export type Modifiers = { [key: string]: (v: string) => string | number | null}
 export const fieldModifiers: Modifiers = {
-  integer: (v: string) => parseInt(v, 10),
-  number: (v: string) => parseFloat(v),
+  integer: (v: string) => {
+    const n = parseInt(v, 10)
+    return isNaN(n) ? null : n
+  },
+  number: (v: string) => {
+    const n = parseFloat(v)
+    return isNaN(n) ? null : n
+  },
   ymdate: (v: string) => `${v.substring(0, 4)}-${v.substring(4)}-15`,
   nodecimal: (v: string) => v.replace(/\..*$/, ''), // Deprecated
   trimdecimal: (v: string) => v.replace(/\..*$/, ''),
