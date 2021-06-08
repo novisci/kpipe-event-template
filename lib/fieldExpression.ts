@@ -1,6 +1,6 @@
 import { Parser, Expression, Value } from 'expr-eval'
 import { ITableCache } from './tableCache'
-import { fieldValueFunction, valueFunction, FnConvert, FieldSpecValue, RowData } from './fieldSpec'
+import { fieldValueFunction, FnConvert, FieldSpecValue, RowData } from './fieldSpec'
 import { fieldModifiers, Modifiers } from './modifiers'
 
 type FnExpression = (...args: (string | null)[]) => string
@@ -114,24 +114,13 @@ export function expressionValueFunction (expression: string, headers: string[], 
   if (typeof exprs[0] === 'string' && exprs[0][0] === '$') {
     // console.info(exprs)
     // Only the field name itself may come from the expression, not modifiers, truncation, or lookup
-    if (exprs[0] !== '$' || typeof exprs[1] !== 'function' || exprs.slice(2).reduce((a: boolean, c) => (a || typeof c === 'function'), false)) {
-      throw Error(`Field expression may only modify a field specifier's field component`)
+    if (!(exprs[0] === '$' || exprs[0] === '$"') || typeof exprs[1] !== 'function' || exprs.slice(2).reduce((a: boolean, c) => (a || typeof c === 'function'), false)) {
+      throw Error(`Field expression may only modify a field specifier's field or value component`)
     }
     // Expression evaluates to a field specifier, compute its function and compose
     return (rowData: RowData) => {
-      // console.info(exprFn(rowData))
+      console.info(exprFn(rowData))
       return fieldValueFunction(exprFn(rowData).slice(1), headers, tableCache)(rowData)
-    }
-  } if (typeof exprs[0] === 'string' && exprs[0][0] === '!') {
-    // The field expression result is interpreted as the input to the modifier chain
-    // Only the field name itself may come from the expression, not modifiers, truncation, or lookup
-    if (exprs[0] !== '!' || typeof exprs[1] !== 'function' || exprs.slice(2).reduce((a: boolean, c) => (a || typeof c === 'function'), false)) {
-      throw Error(`Value expression may only modify a field specifier's value component`)
-    }
-    // Expression evaluates to a field specifier, compute its function and compose
-    return (rowData: RowData) => {
-      // console.info(exprFn(rowData))
-      return valueFunction(exprFn(rowData).slice(1), headers, tableCache)(rowData)
     }
   } else {
     // Not field specifier, just return the expression evaluation

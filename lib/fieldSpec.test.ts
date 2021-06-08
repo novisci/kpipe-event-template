@@ -73,3 +73,23 @@ test('Lookup with no default passes through undefined or null key', () => {
 test('Test all modifiers with field{length}(modifier)/lookup', () => {
   expect(testFieldSpec('A{1}(integer)/test-lookup', ['11111', '2', '3', '4'])).toBe('One')
 })
+
+test('First element enclosed in quotes is treated as a value', () => {
+  expect(testFieldSpec('"4444"', ['11111', '2', '3', '4'])).toBe('4444')
+  expect(testFieldSpec('"4444"(integer)', ['11111', '2', '3', '4'])).toBe(4444)
+  expect(testFieldSpec('"4444"{1}', ['11111', '2', '3', '4'])).toBe('4')
+  expect(testFieldSpec('"4444"{1}(integer)', ['11111', '2', '3', '4'])).toBe(4)
+  expect(testFieldSpec('"4444"{1}/test-lookup', ['11111', '2', '3', '4'])).toBe("Four")
+})
+
+test('Field specifier value (enclosed in quotes) may be empty', () => {
+  expect(testFieldSpec('""(integer)', ['11111', '2', '3', '4'])).toBe(null)
+})
+
+test('Invalid field specifiers throw an error', () => {
+  const badFieldSpecs = [
+    '{4}', '/fred', 'field(mod){3}', 'field/lookup{fg}', 
+    '"value"(fred){5}'
+  ]
+  badFieldSpecs.forEach(s => expect(() => testFieldSpec(s, ['1', '2', '3', '4'])).toThrow(Error))
+})

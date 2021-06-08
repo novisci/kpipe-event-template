@@ -104,6 +104,6 @@ test('Test dynamic lookup from expression throws error', () => {
 
 test('Field expression returns value instead of field name', () => {
   const staticVars = { 'VAL': '11111' }
-  expect(testExpression('!${VAL}{1}/test-lookup', ['11111', '2', '3', '4'], staticVars)).toBe('One')
-  expect(testExpression('!${"3"}{1}/test-lookup', ['11111', '2', '3', '4'], staticVars)).toBe('Three')
+  expect(testExpression('$"${VAL}"{1}/test-lookup', ['11111', '2', '3', '4'], staticVars)).toBe('One')
+  expect(testExpression('$"${"3"}"{1}/test-lookup', ['11111', '2', '3', '4'], staticVars)).toBe('Three')
 })
